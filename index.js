@@ -1,6 +1,6 @@
 const canvas = document.getElementById("canvas");
-canvas.width = 500;
-canvas.height = 350;
+canvas.width = 550;
+canvas.height = 320;
 const context = canvas.getContext("2d");
 
 const player1Markcount = document.getElementById("player1__markcount");
@@ -20,6 +20,28 @@ updatePunctuation({
   player2: 0,
 });
 
+const randomizeXSpeed = (ySpeed) => {
+  const xSpeed = ySpeed * Math.random() + 1 * 4.5;
+  return xSpeed;
+};
+
+const getPlayerInput = (callback) => {
+  let pressedKey = null;
+  window.addEventListener("keydown", ({ key }) => {
+    pressedKey = key;
+  });
+  window.addEventListener("keyup", ({ key }) => {
+    if (key === pressedKey) {
+      pressedKey = null;
+    }
+  });
+  const update = () => {
+    callback(pressedKey);
+    requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+};
+
 class Paddle {
   constructor(x = 0, color = "green", size = 10, speed = 5) {
     this.x = x;
@@ -33,7 +55,7 @@ class Paddle {
     context.fillStyle = this.color;
     context.fillRect(this.x, this.y, this.w, this.h);
   }
-  moveY(yOffset, direction) {
+  moveY(direction) {
     const update = () => {
       const canMoveUp = this.y > 0;
       const canMoveDown = this.y < canvas.height - this.h;
@@ -41,18 +63,16 @@ class Paddle {
         this.y -= this.speed;
       } else if (direction === "down" && canMoveDown) {
         this.y += this.speed;
-      } else return;
-
-      if (yOffset > 0) requestAnimationFrame(update);
-      yOffset--;
+      }
+      requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
   }
 }
 
 const paddles = [
-  new Paddle(0, "white", 10, (speed = 8)),
-  new Paddle(canvas.width - 10, "white", 10, (speed = 8)),
+  new Paddle(35, "white", 10, (speed = 8)),
+  new Paddle(canvas.width - 35 - 10, "white", 10, (speed = 8)),
 ];
 
 class Ball {
@@ -69,69 +89,66 @@ class Ball {
     this.color = color;
     this.xDirection = xDirection;
     this.yDirection = yDirection;
-    this.speed = speed;
+    this.ySpeed = speed;
+    this.xSpeed = 2;
   }
   draw() {
     if (this.xDirection === "right") {
-      if (this.x < canvas.width - 15 - 10) {
-        this.x += this.speed * 1.5;
+      const [_, paddle] = paddles;
+      const hasCollapseInPaddle =
+        this.x + this.size > paddle.x &&
+        this.x + this.size < paddle.x + paddle.w &&
+        this.y > paddle.y - this.y / 8 &&
+        this.y < paddle.y + paddle.h + this.y / 8;
+      const hasCollapseInWall = this.x > canvas.width - paddle.w;
+      if (!hasCollapseInWall && !hasCollapseInPaddle) {
+        this.x += this.xSpeed;
       } else {
-        const [_, paddle] = paddles;
-
-        // console.log(`
-        //   PADDLE: ${1}
-        //   ball y position: ${this.y}
-        //   paddle y position: ${paddle.y}
-        //   paddle h size: ${paddle.h}
-        // `)
-
-        if (this.y < paddle.y || this.y > paddle.y + paddle.h) {
+        this.xDirection = "left";
+        this.xSpeed = randomizeXSpeed(this.ySpeed);
+        if (hasCollapseInWall) {
           updatePunctuation({
             player1: Number(player1Markcount.innerHTML) + 1,
             player2: null,
           });
         }
-        this.xDirection = "left";
       }
     } else if (this.xDirection === "left") {
-      if (this.x > 10) {
-        this.x -= this.speed * 1.5;
+      const [paddle, _] = paddles;
+      const hasCollapseInPaddle =
+        this.x + this.size > paddle.x &&
+        this.x + this.size < paddle.x + paddle.w &&
+        this.y > paddle.y - this.y / 8 &&
+        this.y < paddle.y + paddle.h + this.y / 8;
+      const hasCollapseInWall = this.x <= 0;
+      if (!hasCollapseInPaddle && !hasCollapseInWall) {
+        this.x -= this.xSpeed;
       } else {
-        const [paddle, _] = paddles;
-
-        // console.log(`
-        //   PADDLE: ${2}
-        //   ball y position: ${this.y}
-        //   paddle y position: ${paddle.y}
-        //   paddle h size: ${paddle.h}
-        // `)
-
-        if (this.y < paddle.y || this.y > paddle.y + paddle.h) {
+        this.xDirection = "right";
+        this.xSpeed = randomizeXSpeed(this.ySpeed);
+        if (hasCollapseInWall) {
           updatePunctuation({
             player1: null,
             player2: Number(player2Markcount.innerHTML) + 1,
           });
         }
-        this.xDirection = "right";
       }
     }
-
     if (this.yDirection === "up") {
       if (this.y > 0) {
-        this.y -= this.speed;
+        this.y -= this.ySpeed;
       } else this.yDirection = "down";
     } else if (this.yDirection === "down") {
       if (this.y < canvas.height - 10) {
-        this.y += this.speed;
+        this.y += this.ySpeed;
       } else this.yDirection = "up";
     }
-
     context.fillStyle = this.color;
     context.fillRect(this.x, this.y, this.size, this.size);
   }
 }
 
-const newBall = new Ball("lime", (size = 10), (speed = 5), "right", "up");
+const newBall = new Ball("red", (size = 10), (speed = 3.5), "right", "up");
 
 class Net {
   constructor() {
@@ -161,12 +178,22 @@ requestAnimationFrame(update);
 
 // grabbing user's input
 
-window.addEventListener("keydown", ({ key }) => {
+getPlayerInput((pressedKey) => {
   const [paddle1, paddle2] = paddles;
-
-  if (key === "w") paddle1.moveY(4, "up");
-  else if (key === "s") paddle1.moveY(4, "down");
-
-  if (key === "ArrowUp") paddle2.moveY(4, "up");
-  else if (key === "ArrowDown") paddle2.moveY(4, "down");
+  switch (pressedKey) {
+    case "w":
+      paddle1.moveY("up");
+      break;
+    case "s":
+      paddle1.moveY("down");
+      break;
+    case "ArrowUp":
+      paddle2.moveY("up");
+      break;
+    case "ArrowDown":
+      paddle2.moveY("down");
+      break;
+    default:
+      break;
+  }
 });
