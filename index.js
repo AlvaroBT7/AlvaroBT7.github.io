@@ -180,20 +180,8 @@ requestAnimationFrame(update);
 
 getPlayerInput((pressedKey) => {
   const [paddle1, paddle2] = paddles;
-  switch (pressedKey) {
-    case "w":
-      paddle1.moveY("up");
-      break;
-    case "s":
-      paddle1.moveY("down");
-      break;
-    case "ArrowUp":
-      paddle2.moveY("up");
-      break;
-    case "ArrowDown":
-      paddle2.moveY("down");
-      break;
-    default:
-      break;
-  }
+  if (pressedKey === "w") paddle1.moveY("up");
+  if (pressedKey === "s") paddle1.moveY("down");
+  if (pressedKey === "ArrowUp") paddle2.moveY("up");
+  if (pressedKey === "ArrowDown") paddle2.moveY("down");
 });
