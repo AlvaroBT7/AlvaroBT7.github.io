@@ -148,7 +148,7 @@ class Ball {
   }
 }
 
-const newBall = new Ball("red", (size = 10), (speed = 3.5), "right", "up");
+const newBall = new Ball("lime", (size = 10), (speed = 3.5), "right", "up");
 
 class Net {
   constructor() {

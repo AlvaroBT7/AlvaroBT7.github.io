@@ -6,12 +6,17 @@ import {
   strToArr,
   arrToStr,
   updateInnerHTML,
-} from "./utilities.js";
+} from "./svgMarkerUtilities.js";
+
+// importando los logos svg
+
+// import githubLogo from "../svg/githubLogo.svg";
+// import jsLogo from "../svg/jsLogo.svg";
 
 // objeto con las rutas de cada logo disponible
 const svgLogos = {
-  githubLogo: "`ruta logo github`",
-  jsLogo: "`ruta logo js`",
+  githubLogo: `<img class='svgIcon' src="/src/svgs/githubLogo.svg" alt="github logo"/>`,
+  jsLogo: `<img class='svgIcon' src="/src/svgs/jsLogo.svg" alt="github logo"/>`,
 };
 
 // buscando / creando / simulando una lista de elementos html mediante objetos con la key de `innerHTML`
@@ -51,10 +56,10 @@ svgContainers.forEach((svgContainer) => {
     );
 
   // replaces the svg template by the respective svgLogo route
-  let svgNameStrTemplate = `{svg:${svgName}}`;
-  if (countSlice(content, svgNameStrTemplate) > 1)
+  if (countSlice(content, targetStrSlice) > 1)
     throw new Error("To many svg icon template inside the same html tag");
 
+  let svgNameStrTemplate = `{svg:${svgName}}`;
   let newContent = strToArr(content);
   newContent.splice(content.indexOf(targetStrSlice), 0, svgRoute);
   newContent = arrToStr(newContent);
